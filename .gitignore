@@ -1,0 +1,8 @@
+# OS / IDE
+.DS_Store
+*.iml
+.idea/
+
+# Gradle (各模块 .gitignore 已忽略 build/；此处兜底)
+.gradle/
+build/

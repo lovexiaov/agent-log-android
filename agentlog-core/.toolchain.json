@@ -1,0 +1,8 @@
+{
+  "adapter": "kotlin",
+  "stages": {
+    "typecheck": "./gradlew compileKotlin",
+    "test": "./gradlew test",
+    "build": "./gradlew build"
+  }
+}
