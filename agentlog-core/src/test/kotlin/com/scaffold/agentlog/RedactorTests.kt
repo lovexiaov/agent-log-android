@@ -1,6 +1,8 @@
 package com.scaffold.agentlog
 
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class RedactorTests {
@@ -36,10 +38,13 @@ class RedactorTests {
     fun redactsNestedValuesRecursively() {
         val r = Redactor()
         // 顶层敏感键整体掩码；非敏感键的字符串值走正则脱敏（与 Swift maskSensitiveKeys 一致）。
-        val payload = mapOf(
-            "token" to "secret".toJsonValue(), // 顶层敏感键 -> 整体掩码
-            "note" to "token=abc123".toJsonValue(), // 非敏感键，字符串值走正则
-        )
+        val payload =
+            mapOf(
+                // 顶层敏感键 -> 整体掩码
+                "token" to "secret".toJsonValue(),
+                // 非敏感键，字符串值走正则
+                "note" to "token=abc123".toJsonValue(),
+            )
         val out = r.maskSensitiveKeys(payload)
         assertEquals(JsonValue.Str("***REDACTED***"), out["token"])
         val note = (out["note"] as JsonValue.Str).value

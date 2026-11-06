@@ -26,7 +26,8 @@
 模块划分（对齐语言中立约定）：
 
 - **`agentlog-core`**（纯 Kotlin/JVM，**零第三方依赖**）：实现 `INTERFACE.md` 契约与全部逻辑（`LogEvent` / `Level` / `Redactor` / `Session` / `EventType` / `Logger` / `LoggingConfig` / 最小化 `Json`）。可在无 Android SDK 环境编译与测试（含 `SchemaTests`）。
-- **`agentlog-android`**（AGP 库）：依赖 `agentlog-core`，提供 Android 平台胶水（`AgentLogAndroid.bootstrap`、生命周期→`screen_view`、未捕获异常→`crash`、主线程卡顿→`hang`、OkHttp→`network_request` + `traceparent` 注入）。
+- **`agentlog-android`**（AGP 库）：以 `api` 依赖 `agentlog-core`，提供 Android 平台胶水（`AgentLogAndroid.bootstrap`、生命周期→`screen_view`、未捕获异常→`crash`、主线程卡顿→`hang`、OkHttp→`network_request` + `traceparent` 注入）。`api` 使 core 的公开类型（`AgentLog`/`Level`/`LoggingConfig` 等）对消费者（示例 App、业务 App）传递可见。
+- **`example`**（Android Application，**仅本地/演示，不发布**）：示例 App，演示 `bootstrap` + 四种自动埋点（screen_view 自动、crash/hang/network 按钮触发），用于手测自动埋点行为。
 
 ## 设计理念
 
@@ -100,6 +101,19 @@ AgentLogAndroid.bootstrap(context = this, config = config)
 
 > UI 交互（`ui_interaction`）对齐 macOS用运行时 swizzle，Android 无对应机制；如需可后续通过 Accessibility / 触摸监听补充。本期聚焦上述四类。
 
+## 示例 App（手测自动埋点）
+
+`example/` 是一个可独立运行的 Android 演示 App，用于**手测自动埋点**行为（CI 仅验证其可编译为 APK，运行时行为需在真机/模拟器验证）：
+
+1. 安装并打开 `example`，日志落盘于 `Context.cacheDir/agentlog/agent-log.jsonl`；点「Show log path」可查看路径，用 `adb pull` 取出分析。
+2. 进入页面即触发 `screen_view`（自动，无需代码）。
+3. 「Network request」：经 `AgentNetworkInterceptor` 发起请求，记录 `network_request` 并注入 `traceparent`。
+4. 「Simulate main-thread hang」：主线程阻塞 700ms，触发 `hang` 事件（>250ms 阈值）。
+5. 「Trigger crash」：子线程抛未捕获异常，由崩溃处理器记录 `crash` 事件（进程随后退出，重启后查日志）。
+6. 「Log Info/Warn/Error」与「Log with child context」演示业务手动日志与 `child` 上下文绑定。
+
+构建示例 APK：`ANDROID_HOME=~/Library/Android/sdk ./gradlew :example:assembleDebug`（产物在 `example/build/outputs/apk/debug/`）。
+
 ## 日志 Schema（面向 Agent）
 
 线格式遵循 **Schema v1**（真源：[`docs/schema/log-event.schema.json`](docs/schema/log-event.schema.json)）。Kotlin 内部用 camelCase，但 `LogEvent` **只在序列化边界**映射为 snake_case；顶层字段集封闭，业务字段一律进 `payload`。
@@ -135,16 +149,19 @@ AgentLogAndroid.bootstrap(context = this, config = config)
 
 ## 构建与验证
 
-仓库是**单一 Gradle 工程**（根 `settings.gradle.kts` 含 `:agentlog-core` + `:agentlog-android`），可用根 wrapper 一处构建：
+仓库是**单一 Gradle 根工程**（`settings.gradle.kts` 含 `:agentlog-core` + `:agentlog-android` + `:example`），根 wrapper 一处构建：
 
 | 命令 | 说明 | 需 Android SDK |
 |---|---|---|
 | `./gradlew :agentlog-core:test` | 核心 16 测试（含对齐 Swift 的 `SchemaTests`）+ jar | 否（配置按需，不配置 Android 模块） |
-| `./gradlew :agentlog-android:build` | AAR 产出 + lint（含 core 编译） | 是（`ANDROID_HOME` 指向 SDK） |
+| `./gradlew :agentlog-android:build` | AAR 产出 + Android lint（含 core 编译） | 是（`ANDROID_HOME` 指向 SDK） |
+| `./gradlew ktlintCheck` | 全模块 ktlint 静态检查（已接入各模块 `build.gradle.kts`） | 否（纯 JVM 检查） |
+| `./gradlew :example:assembleDebug` | 示例 App APK 冒烟构建（验证库集成可编译） | 是 |
+| `./gradlew build` | 一次构建全部模块（core 测试 + android AAR + example APK） | 是 |
 
-`agentlog-core` 另保留**独立 wrapper**（`agentlog-core/gradlew`），可在完全无 Android SDK 的环境单独 `./gradlew test`，用于不关心 Android 的纯 JVM 校验。
+`agentlog-core` 另保留**独立 wrapper**（`agentlog-core/gradlew`），可在完全无 Android SDK 的环境单独 `./gradlew test ktlintCheck`，用于不关心 Android 的纯 JVM 校验（即 ai-dev-spec gate-runner 的运行方式）。
 
-连续集成见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)：`core` job（JDK17，无 SDK，跑核心测试）与 `android` job（JDK17 + Android SDK，跑 AGP build/lint）两个并行任务。
+连续集成见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)：`core` job（JDK17，无 SDK，跑核心测试 + ktlint）+ `android` job（JDK17 + Android SDK，跑 AGP build + 示例 APK + 全模块 ktlint）。
 
 > 本地首次依赖下载走本机透明代理（等价于 `proxy_on` 后的状态）；CI（GitHub Actions）直连公网，无需代理。
 
@@ -165,11 +182,14 @@ agent-log-android/
 │   ├── .toolchain.json          # 声明 adapter: "kotlin"（供 ai-dev-spec gate-runner）
 │   ├── gradlew / gradlew.bat    # 独立 wrapper（无 SDK 也可构建/测试）
 │   └── src/{main,test}/kotlin/com/scaffold/agentlog/...
-└── agentlog-android/            # AGP 库，依赖 core
-    └── src/main/kotlin/com/scaffold/agentlog/android/...
-        ├── AgentLogAndroid.kt     # bootstrap + 生命周期/崩溃/卡顿注册
-        ├── NetworkInterceptor.kt  # OkHttp 拦截器 + traceparent 注入
-        └── HangMonitor.kt         # 主线程卡顿 watchdog
+├── agentlog-android/            # AGP 库，以 api 依赖 core（传递暴露核心公共类型）
+│   └── src/main/kotlin/com/scaffold/agentlog/android/...
+│       ├── AgentLogAndroid.kt     # bootstrap + 生命周期/崩溃/卡顿注册
+│       ├── AgentNetworkInterceptor.kt  # OkHttp 拦截器 + traceparent 注入
+│       └── HangMonitor.kt         # 主线程卡顿 watchdog
+└── example/                     # 演示 App（手测自动埋点，不发布）
+    ├── build.gradle.kts         # com.android.application + ktlint
+    └── src/main/.../{DemoApp,MainActivity}.kt + 布局/清单
 ```
 
 ## License

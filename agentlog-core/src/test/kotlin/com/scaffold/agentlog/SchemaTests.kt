@@ -1,6 +1,9 @@
 package com.scaffold.agentlog
 
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
@@ -70,7 +73,12 @@ class SchemaTests {
 
     @Test
     fun decodeAcceptsSchemaLine() {
-        val json = """{"ts":"2026-11-02T13:37:21.123Z","level":"info","service":"com.yourapp.agent","subsystem":"com.yourapp.agent","category":"auto","event_type":"network_request","session_id":"8f14e45f-ea0a-4c1b-9c3e-0d5b2c7a9e11","trace_id":"trace_3f9a1c2b7d4e","agent_auto":true,"message":"GET https://api.example.com/orders -> 200 (128ms)","env":"prod","payload":{"host":"api.example.com","path":"/orders","method":"GET","status":200,"duration_ms":128}}"""
+        val json = """{"ts":"2026-11-02T13:37:21.123Z","level":"info","service":"com.yourapp.agent",""" +
+            """"subsystem":"com.yourapp.agent","category":"auto","event_type":"network_request",""" +
+            """"session_id":"8f14e45f-ea0a-4c1b-9c3e-0d5b2c7a9e11","trace_id":"trace_3f9a1c2b7d4e",""" +
+            """"agent_auto":true,"message":"GET https://api.example.com/orders -> 200 (128ms)",""" +
+            """"env":"prod","payload":{"host":"api.example.com","path":"/orders",""" +
+            """"method":"GET","status":200,"duration_ms":128}}"""
         val obj = parseLine(json)
         assertEquals("network_request", obj["event_type"])
         assertEquals("8f14e45f-ea0a-4c1b-9c3e-0d5b2c7a9e11", obj["session_id"])

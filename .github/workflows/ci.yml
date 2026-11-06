@@ -36,8 +36,12 @@ jobs:
         working-directory: agentlog-core
         run: ./gradlew test --no-daemon
 
+      - name: Lint core (ktlint)
+        working-directory: agentlog-core
+        run: ./gradlew ktlintCheck --no-daemon
+
   android:
-    name: Android (AGP library)
+    name: Android (AGP library + example app)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -65,5 +69,11 @@ jobs:
           key: gradle-android-${{ hashFiles('**/*.gradle*', 'gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-android-
 
-      - name: Build & lint android library (incl. core)
+      - name: Build android library (incl. core)
         run: ./gradlew :agentlog-android:build --no-daemon
+
+      - name: Build example app (smoke test integration)
+        run: ./gradlew :example:assembleDebug --no-daemon
+
+      - name: Lint all modules (ktlint)
+        run: ./gradlew ktlintCheck --no-daemon

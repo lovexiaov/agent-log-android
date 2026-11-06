@@ -19,7 +19,7 @@ enum class EventType(val raw: String) {
     NETWORK_REQUEST("network_request"),
     CRASH("crash"),
     HANG("hang"),
-    LOG("log");
+    LOG("log"),
 }
 
 /**
@@ -31,7 +31,8 @@ enum class AutoInstrumentation {
     UI_INTERACTION,
     NETWORK,
     CRASH,
-    HANG;
+    HANG,
+    ;
 
     companion object {
         val ALL: Set<AutoInstrumentation> = entries.toSet()

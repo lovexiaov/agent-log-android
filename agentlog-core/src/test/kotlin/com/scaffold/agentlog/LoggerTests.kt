@@ -1,14 +1,22 @@
 package com.scaffold.agentlog
 
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class LoggerTests {
     private fun logger(minLevel: Level = Level.DEBUG, redactEnabled: Boolean = true): Pair<Logger, MemorySink> {
         val sink = MemorySink()
         val logger = Logger(
-            service = "test.service", env = "dev", subsystem = "test.agent",
-            minLevel = minLevel, redactor = Redactor(), sink = sink, redactEnabled = redactEnabled,
+            service = "test.service",
+            env = "dev",
+            subsystem = "test.agent",
+            minLevel = minLevel,
+            redactor = Redactor(),
+            sink = sink,
+            redactEnabled = redactEnabled,
         )
         return logger to sink
     }
@@ -19,8 +27,13 @@ class LoggerTests {
     fun childMergesContextAndDoesNotMutateParent() {
         val sink = MemorySink()
         val parent = Logger(
-            service = "s", env = "dev", subsystem = "sub", minLevel = Level.DEBUG,
-            redactor = Redactor(), sink = sink, redactEnabled = true,
+            service = "s",
+            env = "dev",
+            subsystem = "sub",
+            minLevel = Level.DEBUG,
+            redactor = Redactor(),
+            sink = sink,
+            redactEnabled = true,
         )
         val child = parent.child(mapOf("userId" to "u-42"))
         child.info("from child")

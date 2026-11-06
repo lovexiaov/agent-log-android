@@ -16,8 +16,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 object HangMonitor {
     private const val THRESHOLD_MS = 250L
     private val running = AtomicBoolean(false)
-    @Volatile private var lastPing = 0L
-    @Volatile private var reported = false
+
+    @Volatile
+    private var lastPing = 0L
+
+    @Volatile
+    private var reported = false
 
     fun start() {
         if (!running.compareAndSet(false, true)) return // 幂等：避免重复 bootstrap 多注册

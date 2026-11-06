@@ -111,8 +111,12 @@ class Logger(
     fun error(message: String, category: String = "app", traceId: String? = null, payload: Map<String, Any?>? = null) =
         log(Level.ERROR, message, category, traceId, EventType.LOG, payload, agentAuto = false)
 
-    fun critical(message: String, category: String = "app", traceId: String? = null, payload: Map<String, Any?>? = null) =
-        log(Level.CRITICAL, message, category, traceId, EventType.LOG, payload, agentAuto = false)
+    fun critical(
+        message: String,
+        category: String = "app",
+        traceId: String? = null,
+        payload: Map<String, Any?>? = null,
+    ) = log(Level.CRITICAL, message, category, traceId, EventType.LOG, payload, agentAuto = false)
 
     // ---- 自动埋点内部回调（agentAuto = true，框架核心价值，始终记录） ----
     fun recordAuto(

@@ -27,7 +27,7 @@ fun Any?.toJsonValue(): JsonValue = when (this) {
     is Float -> JsonValue.FloatNum(this.toDouble())
     is String -> JsonValue.Str(this)
     is Map<*, *> -> JsonValue.Obj(
-        this.mapKeys { it.key.toString() }.mapValues { it.value.toJsonValue() }
+        this.mapKeys { it.key.toString() }.mapValues { it.value.toJsonValue() },
     )
     is List<*> -> JsonValue.Arr(this.map { it.toJsonValue() })
     is Array<*> -> JsonValue.Arr(this.map { it.toJsonValue() })
@@ -50,8 +50,11 @@ object Json {
                 '\n' -> sb.append("\\n")
                 '\r' -> sb.append("\\r")
                 '\t' -> sb.append("\\t")
-                else -> if (c.code < 0x20) sb.append(String.format("\\u%04x", c.code))
-                else sb.append(c)
+                else -> if (c.code < 0x20) {
+                    sb.append(String.format("\\u%04x", c.code))
+                } else {
+                    sb.append(c)
+                }
             }
         }
         return sb.toString()
@@ -66,15 +69,21 @@ object Json {
             is JsonValue.IntNum -> sb.append(v.value.toString())
             is JsonValue.FloatNum -> {
                 val d = v.value
-                if (d.isFinite() && d == d.toLong().toDouble()) sb.append(d.toLong().toString())
-                else sb.append(d.toString())
+                if (d.isFinite() && d == d.toLong().toDouble()) {
+                    sb.append(d.toLong().toString())
+                } else {
+                    sb.append(d.toString())
+                }
             }
             is JsonValue.Bool -> sb.append(if (v.value) "true" else "false")
             JsonValue.Null -> sb.append("null")
             is JsonValue.Obj -> writeObj(sb, v.value)
             is JsonValue.Arr -> {
                 sb.append('[')
-                v.value.forEachIndexed { i, e -> if (i > 0) sb.append(','); writeValue(sb, e) }
+                v.value.forEachIndexed { i, e ->
+                    if (i > 0) sb.append(',')
+                    writeValue(sb, e)
+                }
                 sb.append(']')
             }
         }
@@ -119,51 +128,83 @@ object Json {
         }
 
         private fun parseObject(): Map<String, Any?> {
-            expect('{'); skipWs()
+            expect('{')
+            skipWs()
             val map = LinkedHashMap<String, Any?>()
-            if (peek() == '}') { i++; return map }
-            while (true) {
-                skipWs(); val key = parseString(); skipWs(); expect(':')
-                val value = parseValue(); map[key] = value
-                skipWs()
-                if (peek() == ',') { i++; continue } else break
+            if (peek() == '}') {
+                i++
+                return map
             }
-            skipWs(); expect('}')
+            while (true) {
+                skipWs()
+                val key = parseString()
+                skipWs()
+                expect(':')
+                val value = parseValue()
+                map[key] = value
+                skipWs()
+                if (peek() == ',') {
+                    i++
+                    continue
+                } else {
+                    break
+                }
+            }
+            skipWs()
+            expect('}')
             return map
         }
 
         private fun parseArray(): List<Any?> {
-            expect('['); skipWs()
+            expect('[')
+            skipWs()
             val list = mutableListOf<Any?>()
-            if (peek() == ']') { i++; return list }
+            if (peek() == ']') {
+                i++
+                return list
+            }
             while (true) {
                 list.add(parseValue())
                 skipWs()
-                if (peek() == ',') { i++; continue } else break
+                if (peek() == ',') {
+                    i++
+                    continue
+                } else {
+                    break
+                }
             }
-            skipWs(); expect(']')
+            skipWs()
+            expect(']')
             return list
         }
 
         private fun parseString(): String {
-            expect('"'); val sb = StringBuilder()
+            expect('"')
+            val sb = StringBuilder()
             while (i < src.length) {
                 val c = src[i++]
                 if (c == '"') return sb.toString()
                 if (c == '\\') {
                     val e = src[i++]
                     when (e) {
-                        '"' -> sb.append('"'); '\\' -> sb.append('\\')
-                        '/' -> sb.append('/'); 'n' -> sb.append('\n')
-                        'r' -> sb.append('\r'); 't' -> sb.append('\t')
-                        'b' -> sb.append('\u0008'); 'f' -> sb.append('\u000C')
+                        '"' -> sb.append('"')
+                        '\\' -> sb.append('\\')
+                        '/' -> sb.append('/')
+                        'n' -> sb.append('\n')
+                        'r' -> sb.append('\r')
+                        't' -> sb.append('\t')
+                        'b' -> sb.append('\u0008')
+                        'f' -> sb.append('\u000C')
                         'u' -> {
-                            val hex = src.substring(i, i + 4); i += 4
+                            val hex = src.substring(i, i + 4)
+                            i += 4
                             sb.append(hex.toInt(16).toChar())
                         }
                         else -> sb.append(e)
                     }
-                } else sb.append(c)
+                } else {
+                    sb.append(c)
+                }
             }
             return sb.toString()
         }
@@ -172,16 +213,26 @@ object Json {
             val start = i
             while (i < src.length && src[i] in "+-0123456789.eE") i++
             val s = src.substring(start, i)
-            return if (s.contains('.') || s.contains('e') || s.contains('E')) s.toDoubleOrNull()
-            else s.toLongOrNull()
+            return if (s.contains('.') || s.contains('e') || s.contains('E')) {
+                s.toDoubleOrNull()
+            } else {
+                s.toLongOrNull()
+            }
         }
 
         private fun parseBool(): Boolean {
-            if (src.startsWith("true", i)) { i += 4; return true }
-            i += 5; return false
+            if (src.startsWith("true", i)) {
+                i += 4
+                return true
+            }
+            i += 5
+            return false
         }
 
-        private fun parseNull(): Any? { i += 4; return null }
+        private fun parseNull(): Any? {
+            i += 4
+            return null
+        }
 
         private fun peek(): Char? = if (i < src.length) src[i] else null
         private fun expect(c: Char) {

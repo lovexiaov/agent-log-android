@@ -37,15 +37,12 @@ object AgentLogAndroid {
     }
 
     /** 便捷入口：仅传 subsystem（= service），env 默认 prod，业务应显式覆盖。 */
-    fun bootstrap(
-        context: Context,
-        subsystem: String,
-        env: String = "prod",
-        minLevel: Level = Level.DEBUG,
-    ) = bootstrap(
-        context,
-        LoggingConfig(service = subsystem, subsystem = subsystem, env = env, minLevel = minLevel),
-    )
+    fun bootstrap(context: Context, subsystem: String, env: String = "prod", minLevel: Level = Level.DEBUG) {
+        bootstrap(
+            context,
+            LoggingConfig(service = subsystem, subsystem = subsystem, env = env, minLevel = minLevel),
+        )
+    }
 
     private fun installCrashHandler() {
         val previous = Thread.getDefaultUncaughtExceptionHandler()

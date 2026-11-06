@@ -11,7 +11,8 @@ enum class Level(val agentName: String, val weight: Int) {
     INFO("info", 2),
     WARN("warn", 3),
     ERROR("error", 4),
-    CRITICAL("critical", 5);
+    CRITICAL("critical", 5),
+    ;
 
     companion object {
         fun fromName(name: String): Level? = entries.firstOrNull { it.agentName == name }

@@ -15,12 +15,15 @@ class Redactor(
         val DEFAULT_SENSITIVE_KEYS: Set<String> = setOf(
             "password", "passwd", "pwd", "token", "authorization", "auth",
             "cookie", "secret", "apikey", "api_key", "accesstoken", "access_token",
-            "refreshtoken", "refresh_token", "credential", "privatekey", "private_key", "ssn", "bearer"
+            "refreshtoken", "refresh_token", "credential", "privatekey", "private_key", "ssn", "bearer",
         )
         private const val MASK = "***REDACTED***"
+
         // 匹配 `key=value` / `key: value` / `Authorization: Bearer <token>` 中的敏感值
         private val PATTERN = Regex(
-            """(?i)((?:password|passwd|pwd|token|authorization|auth|cookie|secret|api[_-]?key|access[_-]?token|refresh[_-]?token|bearer)(?:\s*[:=]\s*['"]?)?\s*(?:bearer\s+)?)([^'";,\s]+)"""
+            """(?i)((?:password|passwd|pwd|token|authorization|auth|cookie|secret|""" +
+                """api[_-]?key|access[_-]?token|refresh[_-]?token|bearer)(?:\s*[:=]\s*['"]?)?\s*""" +
+                """(?:bearer\s+)?)([^'";,\s]+)""",
         )
     }
 

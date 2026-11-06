@@ -45,15 +45,24 @@ object AgentLog {
     fun error(message: String, category: String = "app", traceId: String? = null, payload: Map<String, Any?>? = null) =
         shared.error(message, category, traceId, payload)
 
-    fun critical(message: String, category: String = "app", traceId: String? = null, payload: Map<String, Any?>? = null) =
-        shared.critical(message, category, traceId, payload)
+    fun critical(
+        message: String,
+        category: String = "app",
+        traceId: String? = null,
+        payload: Map<String, Any?>? = null,
+    ) = shared.critical(message, category, traceId, payload)
 
     fun child(ctx: Map<String, Any?>): Logger = shared.child(ctx)
     fun setLevel(level: Level) = shared.setLevel(level)
     fun redact(paths: List<String>) = shared.redact(paths)
     fun emit(event: LogEvent) = shared.emit(event)
-    fun recordAuto(eventType: EventType, message: String, category: String = "auto", traceId: String? = null, payload: Map<String, Any?>? = null) =
-        shared.recordAuto(eventType, message, category, traceId, payload)
+    fun recordAuto(
+        eventType: EventType,
+        message: String,
+        category: String = "auto",
+        traceId: String? = null,
+        payload: Map<String, Any?>? = null,
+    ) = shared.recordAuto(eventType, message, category, traceId, payload)
 
     /** 导出当前 JSONL 副本/路径，供 Agent 抓取或人工分析。 */
     fun export(): File = sinkFile
