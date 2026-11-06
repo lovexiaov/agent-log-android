@@ -3,6 +3,13 @@
 *.iml
 .idea/
 
-# Gradle (各模块 .gitignore 已忽略 build/；此处兜底)
+# Gradle
 .gradle/
 build/
+# 各模块 .gitignore 已忽略 build/；此处兜底
+
+# Android 本地配置（机器相关，含 SDK 路径）
+local.properties
+
+# Kotlin 守护进程缓存
+.kotlin/

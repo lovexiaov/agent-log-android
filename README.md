@@ -1,10 +1,15 @@
 # AgentLog — 面向 Agent 的 Android (Kotlin) 日志框架
 
+[![CI](https://github.com/lovexiaov/agent-log-android/actions/workflows/ci.yml/badge.svg)](https://github.com/lovexiaov/agent-log-android/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 为多个项目提供**统一、面向 Agent（AI 调试/排障）**的日志接入规范。本期实现 **Android (Kotlin)**，基于成熟开源方案组合（`kotlin-stdlib` + `okhttp` 拦截器），不重复造轮子，线格式与 Web / macOS 端**逐字相同**（Schema v1）。
 
 - **轻量便捷**：Gradle 一处依赖 + Application 一处 `bootstrap`。
 - **低侵入**：自动埋点默认全开，**业务侧零埋点代码**。
 - **Agent 友好**：结构化 JSONL 落盘（`Context.cacheDir/agentlog/agent-log.jsonl`），机器可直接按行读取；与 Web/macOS 统一 Schema。
+
+> 本仓库是 `ai-dev-spec` 日志体系的 Android 实现，以 **git submodule** 形式挂入 `logging-framework/android/AgentLog`。契约真源见 [`docs/INTERFACE.md`](docs/INTERFACE.md)，线格式真源见 [`docs/schema/log-event.schema.json`](docs/schema/log-event.schema.json)。
 
 ## 架构
 
@@ -27,7 +32,7 @@
 
 | 原则 | 落地 |
 |---|---|
-| 统一、跨端一致 | 线格式遵循 Schema v1（真源 `ai-dev-spec/docs/logging-framework/schema/`），与 Web/macOS 逐字相同 |
+| 统一、跨端一致 | 线格式遵循 Schema v1（[`docs/schema/log-event.schema.json`](docs/schema/log-event.schema.json)），与 Web/macOS 逐字相同 |
 | 轻量、本地优先 | 本地 JSONL 文件，无后端依赖 |
 | 隐私兜底 | 日志层强制脱敏，默认不记网络 body |
 | 业务零改造 | 薄封装 `AgentLog`，一处初始化，自动埋点默认全开 |
@@ -97,7 +102,7 @@ AgentLogAndroid.bootstrap(context = this, config = config)
 
 ## 日志 Schema（面向 Agent）
 
-线格式遵循 **Schema v1**（真源：`ai-dev-spec/docs/logging-framework/schema/log-event.schema.json`）。Kotlin 内部用 camelCase，但 `LogEvent` **只在序列化边界**映射为 snake_case；顶层字段集封闭，业务字段一律进 `payload`。
+线格式遵循 **Schema v1**（真源：[`docs/schema/log-event.schema.json`](docs/schema/log-event.schema.json)）。Kotlin 内部用 camelCase，但 `LogEvent` **只在序列化边界**映射为 snake_case；顶层字段集封闭，业务字段一律进 `payload`。
 
 每行一条 JSON（`agent-log.jsonl`）：
 
@@ -130,27 +135,43 @@ AgentLogAndroid.bootstrap(context = this, config = config)
 
 ## 构建与验证
 
-两个模块各自独立 Gradle 工程（均带 wrapper）：
+仓库是**单一 Gradle 工程**（根 `settings.gradle.kts` 含 `:agentlog-core` + `:agentlog-android`），可用根 wrapper 一处构建：
 
-| 模块 | Gradle | 验证命令 |
+| 命令 | 说明 | 需 Android SDK |
 |---|---|---|
-| `agentlog-core`（纯 JVM） | 9.8.1 | `cd agentlog-core && ./gradlew build`（16 测试 + jar） |
-| `agentlog-android`（AGP 库） | 8.11（AGP 8.7 / Kotlin 2.0.21） | `cd agentlog-android && ANDROID_HOME=$SDK ./gradlew build`（aar + lint） |
+| `./gradlew :agentlog-core:test` | 核心 16 测试（含对齐 Swift 的 `SchemaTests`）+ jar | 否（配置按需，不配置 Android 模块） |
+| `./gradlew :agentlog-android:build` | AAR 产出 + lint（含 core 编译） | 是（`ANDROID_HOME` 指向 SDK） |
 
-> 网络：依赖经本机透明代理下载（等价于 `proxy_on` 后的状态）。`ANDROID_HOME` 需指向 Android SDK（本机 `~/Library/Android/sdk`）。
+`agentlog-core` 另保留**独立 wrapper**（`agentlog-core/gradlew`），可在完全无 Android SDK 的环境单独 `./gradlew test`，用于不关心 Android 的纯 JVM 校验。
 
-门禁：核心模块在 `agentlog-core/.toolchain.json` 声明 `adapter: "kotlin"`，由 `tooling/adapters/kotlin.mjs` 驱动（typecheck=`compileKotlin`、test=`test`、build=`build`）。`gate-runner` 端到端已验证全绿。`SchemaTests` 对齐 Swift 的字段集断言，守住 Schema v1 逐字一致性。
+连续集成见 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)：`core` job（JDK17，无 SDK，跑核心测试）与 `android` job（JDK17 + Android SDK，跑 AGP build/lint）两个并行任务。
+
+> 本地首次依赖下载走本机透明代理（等价于 `proxy_on` 后的状态）；CI（GitHub Actions）直连公网，无需代理。
 
 ## 目录
 
 ```
-logging-framework/android/AgentLog/
-├── agentlog-core/        # 纯 Kotlin/JVM，零第三方依赖，可独立单元测试
+agent-log-android/
+├── settings.gradle.kts          # 根工程：include :agentlog-core + :agentlog-android
+├── build.gradle.kts             # 根工程（模块各自持有构建逻辑）
+├── gradle.properties            # JVM/Android 配置 + 配置按需
+├── gradlew / gradlew.bat        # 根 wrapper（Gradle 8.11，兼容 AGP 8.7）
+├── docs/
+│   ├── INTERFACE.md             # 语言中立契约（方法面）
+│   └── schema/
+│       ├── log-event.schema.json  # Schema v1 线格式（字段集封闭、snake_case）
+│       └── example.json           # 示例行
+├── agentlog-core/               # 纯 Kotlin/JVM，零第三方依赖，可独立单元测试
+│   ├── .toolchain.json          # 声明 adapter: "kotlin"（供 ai-dev-spec gate-runner）
+│   ├── gradlew / gradlew.bat    # 独立 wrapper（无 SDK 也可构建/测试）
 │   └── src/{main,test}/kotlin/com/scaffold/agentlog/...
-├── agentlog-android/     # AGP 库，依赖 core
-│   └── src/main/kotlin/com/scaffold/agentlog/android/...
-│       ├── AgentLogAndroid.kt     # bootstrap + 生命周期/崩溃/卡顿注册
-│       ├── NetworkInterceptor.kt  # OkHttp 拦截器 + traceparent 注入
-│       └── HangMonitor.kt         # 主线程卡顿 watchdog
-└── README.md
+└── agentlog-android/            # AGP 库，依赖 core
+    └── src/main/kotlin/com/scaffold/agentlog/android/...
+        ├── AgentLogAndroid.kt     # bootstrap + 生命周期/崩溃/卡顿注册
+        ├── NetworkInterceptor.kt  # OkHttp 拦截器 + traceparent 注入
+        └── HangMonitor.kt         # 主线程卡顿 watchdog
 ```
+
+## License
+
+[MIT](LICENSE)

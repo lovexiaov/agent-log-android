@@ -24,8 +24,8 @@ repositories {
 }
 
 dependencies {
-    // 复用核心模块（纯 JVM）：通过 settings.gradle.kts 的 includeBuild 引入
-    implementation("com.scaffold:agentlog-core:0.1.0")
+    // 复用核心模块（纯 JVM，实现 Schema v1 契约逻辑）
+    implementation(project(":agentlog-core"))
     // 网络自动埋点依赖 OkHttp 拦截器（业务普遍使用；仅 compile 时需要其 API）
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
