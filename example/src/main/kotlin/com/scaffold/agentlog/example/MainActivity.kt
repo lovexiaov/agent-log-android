@@ -44,9 +44,9 @@ class MainActivity : Activity() {
             )
         }
         findViewById<Button>(R.id.btnChild).setOnClickListener {
-            // child：绑定上下文字段，后续日志自动携带
+            // child：绑定上下文字段，后续日志自动携带（用 info 以匹配 bootstrap 的 minLevel=INFO）
             val child = AgentLog.child(mapOf("demo" to "child-logger"))
-            child.debug("这是一条带上下文字段的日志")
+            child.info("这是一条带上下文字段(sub-logger)的日志")
         }
         findViewById<Button>(R.id.btnNetwork).setOnClickListener { doNetworkRequest() }
         findViewById<Button>(R.id.btnHang).setOnClickListener { simulateHang() }
