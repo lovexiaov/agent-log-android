@@ -30,6 +30,13 @@ tasks.test {
     }
 }
 
+// 全局钉 JDK 17：Kotlin 2.0.x 编译器无法在 JDK 25 上运行（Internal compiler error），
+// 而 JavaCompile 默认跟随运行 Gradle 的 JDK，会引发 JVM-target 不一致。
+// 用 toolchain 让 Java/Kotlin 两侧统一到 17，且不依赖运行 Gradle 的那个 JDK 版本。
+kotlin {
+    jvmToolchain(17)
+}
+
 tasks.compileKotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
