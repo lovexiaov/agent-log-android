@@ -72,8 +72,7 @@ class Logger(
      * 便捷方法：绑定 trace_id + span_id（Schema v1.1），
      * 使该操作内所有事件共享一个 span；导出 OTLP 时日志行与链路节点用同一组 id。
      */
-    fun withSpan(traceId: String, spanId: String): Logger =
-        child(mapOf("traceId" to traceId, "spanId" to spanId))
+    fun withSpan(traceId: String, spanId: String): Logger = child(mapOf("traceId" to traceId, "spanId" to spanId))
 
     /** 设置最低输出级别（INTERFACE §1）。 */
     fun setLevel(level: Level) {
