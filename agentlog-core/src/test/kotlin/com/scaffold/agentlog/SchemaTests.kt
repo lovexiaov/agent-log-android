@@ -25,7 +25,7 @@ class SchemaTests {
         category = "auto",
         eventType = "network_request",
         sessionId = "s-1",
-        traceId = "trace_abc",
+        traceId = "0123456789abcdef0123456789abcdef",
         agentAuto = true,
         message = "GET https://api.example.com/orders -> 200",
         env = "prod",
@@ -47,7 +47,7 @@ class SchemaTests {
         for (key in legacyKeys) assertNull(obj[key], "线格式泄漏了内部命名 $key")
         assertEquals("network_request", obj["event_type"])
         assertEquals("s-1", obj["session_id"])
-        assertEquals("trace_abc", obj["trace_id"])
+        assertEquals("0123456789abcdef0123456789abcdef", obj["trace_id"])
         assertEquals(true, obj["agent_auto"])
     }
 

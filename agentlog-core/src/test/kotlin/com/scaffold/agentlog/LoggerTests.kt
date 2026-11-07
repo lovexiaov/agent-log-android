@@ -70,13 +70,18 @@ class LoggerTests {
     @Test
     fun emitWritesSingleJsonLine() {
         val (logger, sink) = logger(minLevel = Level.TRACE, redactEnabled = false)
-        logger.info("hello", category = "cat", traceId = "t1", payload = mapOf("k" to "v"))
+        logger.info(
+            "hello",
+            category = "cat",
+            traceId = "0123456789abcdef0123456789abcde1",
+            payload = mapOf("k" to "v"),
+        )
         val line = sink.lines().single() // MemorySink 存原始行（不含换行）
         assertFalse(line.contains('\n'), "应为单行 JSON（不含换行）")
         val obj = parse(line)
         assertEquals("hello", obj["message"])
         assertEquals("cat", obj["category"])
-        assertEquals("t1", obj["trace_id"])
+        assertEquals("0123456789abcdef0123456789abcde1", obj["trace_id"])
         assertEquals("v", (obj["payload"] as Map<String, Any?>)["k"])
         assertEquals(false, obj["agent_auto"])
     }

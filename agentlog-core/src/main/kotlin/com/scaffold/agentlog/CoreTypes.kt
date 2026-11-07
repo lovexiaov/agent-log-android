@@ -5,9 +5,31 @@ import java.util.UUID
 /**
  * 一次会话（= 一次进程/App 启动）的稳定标识，用于把同一次运行的日志聚合。
  * 与 macOS 端 `Session.id`、Web 端 `PROCESS_SESSION_ID` 语义一致。
+ *
+ * 生成值为 32 位小写 hex —— 让 `trace_id = session_id` 这个最自然的绑定
+ * 永远满足 Schema v1.2。
  */
 object Session {
-    val id: String = UUID.randomUUID().toString()
+    val id: String = TraceId.newTraceId()
+}
+
+/**
+ * Schema v1.2 trace id：32 位小写 hex，与 W3C traceparent 的 trace-id / OTLP
+ * traceId 同构。
+ *
+ * 非法值一律返回 null（调用方丢弃而不是写出，事件本身照写）—— 不变形、不派生，
+ * OTLP `traceId` 就是调用方给的那个值。
+ */
+object TraceId {
+    private val PATTERN = Regex("^[0-9a-fA-F]{32}$")
+
+    /** 生成一个新的合法 trace id（UUID 去横线）。 */
+    fun newTraceId(): String = UUID.randomUUID().toString().replace("-", "")
+
+    fun normalize(raw: String?): String? {
+        val value = raw?.trim() ?: return null
+        return if (PATTERN.matches(value)) value.lowercase() else null
+    }
 }
 
 /**

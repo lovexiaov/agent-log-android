@@ -38,7 +38,8 @@ data class LogEvent(
         category?.let { sb.append(",\"category\":").append(Json.quote(it)) }
         env?.let { sb.append(",\"env\":").append(Json.quote(it)) }
         userId?.let { sb.append(",\"user_id\":").append(Json.quote(it)) }
-        traceId?.let { sb.append(",\"trace_id\":").append(Json.quote(it)) }
+        // Schema v1.2：非法 trace_id 直接丢弃（事件照写），大写归一为小写
+        TraceId.normalize(traceId)?.let { sb.append(",\"trace_id\":").append(Json.quote(it)) }
         // Schema v1.1：非法 span_id 直接丢弃，绝不写出违规行
         SpanId.normalize(spanId)?.let { sb.append(",\"span_id\":").append(Json.quote(it)) }
         payload?.let { p ->

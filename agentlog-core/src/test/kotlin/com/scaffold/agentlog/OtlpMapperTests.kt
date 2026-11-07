@@ -146,14 +146,12 @@ class OtlpMapperTests {
     // --------------------------------------------------------------------- id
 
     @Test
-    fun traceIdPassthroughAndHashDerivation() {
+    fun traceIdPassthroughAndDropOfNonHex() {
         assertEquals(TRACE, OtlpMapper.traceIdHex(event(traceId = TRACE.uppercase())))
-        val derived = OtlpMapper.traceIdHex(event(traceId = "opaque-trace"))
-        assertNotNull(derived)
-        assertEquals(32, derived!!.length)
-        assertTrue(Regex("^[0-9a-f]{32}$").matches(derived))
-        // 确定性：重试必须幂等
-        assertEquals(derived, OtlpMapper.traceIdHex(event(traceId = "opaque-trace")))
+        // Schema v1.2：非法值不派生、不变形，直接按无 trace 处理
+        for (bad in listOf("opaque-trace", "0123456789abcdef0123456789abcde", 42)) {
+            assertNull(OtlpMapper.traceIdHex(event(traceId = bad.toString())), bad.toString())
+        }
         assertNull(OtlpMapper.traceIdHex(event()))
     }
 
