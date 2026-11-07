@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
  */
 class SchemaTests {
     private val requiredKeys = setOf("ts", "level", "service", "event_type", "session_id", "agent_auto", "message")
-    private val optionalKeys = setOf("trace_id", "subsystem", "category", "env", "user_id", "payload")
+    private val optionalKeys = setOf("trace_id", "span_id", "subsystem", "category", "env", "user_id", "payload")
     private val legacyKeys = setOf("eventType", "sessionId", "traceId", "agentAuto", "timestamp")
 
     private fun parseLine(line: String): Map<String, Any?> = Json.parse(line) as Map<String, Any?>
