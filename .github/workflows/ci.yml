@@ -13,7 +13,7 @@ concurrency:
 jobs:
   core:
     name: Core (JVM, no Android SDK)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
@@ -42,7 +42,7 @@ jobs:
 
   android:
     name: Android (AGP library + example app)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
 
