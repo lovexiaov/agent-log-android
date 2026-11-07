@@ -11,6 +11,20 @@ object Session {
 }
 
 /**
+ * Schema v1.1 span id：16 位小写 hex，与 W3C traceparent 的 span-id 同构。
+ *
+ * 非法值一律返回 null（调用方丢弃而不是写出），保证坏值永远不会产出违规行。
+ */
+object SpanId {
+    private val PATTERN = Regex("^[0-9a-fA-F]{16}$")
+
+    fun normalize(raw: String?): String? {
+        val value = raw?.trim() ?: return null
+        return if (PATTERN.matches(value)) value.lowercase() else null
+    }
+}
+
+/**
  * 自动埋点事件类型。与 Web 端（`agent-log-web`）的 `event_type` 概念对齐。
  */
 enum class EventType(val raw: String) {

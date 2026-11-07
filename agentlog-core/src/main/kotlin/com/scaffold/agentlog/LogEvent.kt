@@ -16,6 +16,7 @@ data class LogEvent(
     val eventType: String,
     val sessionId: String,
     val traceId: String? = null,
+    val spanId: String? = null,
     val agentAuto: Boolean,
     val message: String,
     val env: String? = null,
@@ -38,6 +39,8 @@ data class LogEvent(
         env?.let { sb.append(",\"env\":").append(Json.quote(it)) }
         userId?.let { sb.append(",\"user_id\":").append(Json.quote(it)) }
         traceId?.let { sb.append(",\"trace_id\":").append(Json.quote(it)) }
+        // Schema v1.1：非法 span_id 直接丢弃，绝不写出违规行
+        SpanId.normalize(spanId)?.let { sb.append(",\"span_id\":").append(Json.quote(it)) }
         payload?.let { p ->
             if (p.isNotEmpty()) {
                 sb.append(",\"payload\":")

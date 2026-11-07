@@ -61,12 +61,19 @@ class Logger(
     var minLevel: Level = minLevel
         private set
 
-    /** 绑定上下文（traceId/userId/subsystem/env 等），返回新实例，不污染原实例（对齐 TS child）。 */
+    /** 绑定上下文（traceId/spanId/userId/subsystem/env 等），返回新实例，不污染原实例（对齐 TS child）。 */
     fun child(ctx: Map<String, Any?>): Logger = Logger(
         service = service, env = env, subsystem = subsystem, minLevel = minLevel,
         redactor = redactor, sink = sink, sessionId = sessionId,
         redactEnabled = redactEnabled, bound = bound + ctx,
     )
+
+    /**
+     * 便捷方法：绑定 trace_id + span_id（Schema v1.1），
+     * 使该操作内所有事件共享一个 span；导出 OTLP 时日志行与链路节点用同一组 id。
+     */
+    fun withSpan(traceId: String, spanId: String): Logger =
+        child(mapOf("traceId" to traceId, "spanId" to spanId))
 
     /** 设置最低输出级别（INTERFACE §1）。 */
     fun setLevel(level: Level) {
@@ -141,7 +148,12 @@ class Logger(
         if (traceId != null) merged["traceId"] = traceId
         if (payload != null) merged += payload
 
-        val reserved = setOf("userId", "sessionId", "traceId", "event", "category", "subsystem", "env")
+        // 保留键接受 camelCase 与 snake_case 两种写法（Kotlin 习惯前者，线格式与
+        // Go/Python/Java 端统一用后者）；两种都不能漏进 payload。
+        val reserved = setOf(
+            "userId", "user_id", "sessionId", "session_id", "traceId", "trace_id",
+            "spanId", "span_id", "event", "category", "subsystem", "env",
+        )
         val payloadMap = merged.filterKeys { it !in reserved }.mapValues { it.value.toJsonValue() }
 
         val event = LogEvent(
@@ -151,15 +163,25 @@ class Logger(
             subsystem = (merged["subsystem"] as? String) ?: subsystem,
             category = (merged["category"] as? String),
             eventType = (merged["event"] as? String) ?: eventType.raw,
-            sessionId = (merged["sessionId"] as? String) ?: sessionId,
-            traceId = (merged["traceId"] as? String),
+            sessionId = merged.firstStringOf("sessionId", "session_id") ?: sessionId,
+            traceId = merged.firstStringOf("traceId", "trace_id"),
+            spanId = merged.firstStringOf("spanId", "span_id"),
             agentAuto = agentAuto,
             message = message,
             env = (merged["env"] as? String) ?: env,
-            userId = (merged["userId"] as? String),
+            userId = merged.firstStringOf("userId", "user_id"),
             payload = if (payloadMap.isEmpty()) null else payloadMap,
         )
         emit(event)
+    }
+
+    /** 依次取第一个非空字符串，用于兼容 camelCase / snake_case 两种键名写法。 */
+    private fun Map<String, Any?>.firstStringOf(vararg keys: String): String? {
+        for (key in keys) {
+            val value = this[key]
+            if (value is String && value.isNotEmpty()) return value
+        }
+        return null
     }
 
     /** 程序化读取全部结构化条目（Agent 消费入口）。 */
