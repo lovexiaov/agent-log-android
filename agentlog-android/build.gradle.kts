@@ -10,7 +10,7 @@ ktlint {
 }
 
 android {
-    namespace = "com.scaffold.agentlog"
+    namespace = "cn.lovexiaov.agent.log"
     compileSdk = 34
 
     defaultConfig {

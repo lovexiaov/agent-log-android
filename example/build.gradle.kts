@@ -10,11 +10,11 @@ ktlint {
 }
 
 android {
-    namespace = "com.scaffold.agentlog.example"
+    namespace = "cn.lovexiaov.agent.log.example"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.scaffold.agentlog.example"
+        applicationId = "cn.lovexiaov.agent.log.example"
         minSdk = 21
         targetSdk = 34
         versionCode = 1

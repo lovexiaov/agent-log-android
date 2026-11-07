@@ -9,8 +9,8 @@ ktlint {
     ignoreFailures.set(false)
 }
 
-group = "com.scaffold"
-version = "0.1.0"
+group = "cn.lovexiaov.agent.log"
+version = "1.2.0"
 
 repositories {
     mavenCentral()
