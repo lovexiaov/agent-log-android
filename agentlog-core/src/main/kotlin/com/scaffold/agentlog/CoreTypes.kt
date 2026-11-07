@@ -26,6 +26,10 @@ object SpanId {
 
 /**
  * 自动埋点事件类型。与 Web 端（`agent-log-web`）的 `event_type` 概念对齐。
+ *
+ * `db_query` 与 Java/Go/Python 端同名（Schema v1.1 起 payload 词表统一，
+ * SQL 文本一律写 `statement`，见 README §3.5）；库本身不做 SQL 埋点，
+ * 这里保留该类型是为了让业务侧/上层埋点能产出符合词表的事件。
  */
 enum class EventType(val raw: String) {
     SCREEN_VIEW("screen_view"),
@@ -33,6 +37,7 @@ enum class EventType(val raw: String) {
     NETWORK_REQUEST("network_request"),
     CRASH("crash"),
     HANG("hang"),
+    DB_QUERY("db_query"),
     LOG("log"),
 }
 
