@@ -32,6 +32,7 @@ class OtlpMapperTests {
         traceId: String? = null,
         spanId: String? = null,
         agentAuto: Boolean = false,
+        release: String? = null,
     ) = LogEvent(
         ts = TS,
         level = level,
@@ -43,6 +44,7 @@ class OtlpMapperTests {
         agentAuto = agentAuto,
         message = message,
         env = "prod",
+        release = release,
         payload = payload,
     )
 
@@ -401,6 +403,29 @@ class OtlpMapperTests {
         assertEquals("2.1.0", stringAttr(resource, "service.version"))
         val names = values(resource).map { text(fields(it)["key"]) }.filter { it == "service.name" }
         assertEquals(1, names.size)
+    }
+
+    @Test
+    fun releaseMapsToServiceVersion() {
+        val body = OtlpMapper.toOtlpLogs(listOf(event(release = "1.4.2")))
+        val resource = fields(
+            fields(values(fields(body)["resourceLogs"]).first())["resource"] as JsonValue,
+        )["attributes"]
+        assertEquals("1.4.2", stringAttr(resource, "service.version"))
+    }
+
+    @Test
+    fun builtinServiceVersionWinsOverExtra() {
+        val body = OtlpMapper.toOtlpLogs(
+            listOf(event(release = "1.4.2")),
+            mapOf("service.version" to JsonValue.Str("9.9.9")),
+        )
+        val resource = fields(
+            fields(values(fields(body)["resourceLogs"]).first())["resource"] as JsonValue,
+        )["attributes"]
+        assertEquals("1.4.2", stringAttr(resource, "service.version"))
+        val count = values(resource).map { text(fields(it)["key"]) }.count { it == "service.version" }
+        assertEquals(1, count)
     }
 
     @Test

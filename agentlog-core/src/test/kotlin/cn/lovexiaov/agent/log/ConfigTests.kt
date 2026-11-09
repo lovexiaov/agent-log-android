@@ -27,6 +27,12 @@ class ConfigTests {
     }
 
     @Test
+    fun parsesRelease() {
+        assertNull(LoggingConfig.fromJson("""{"service":"x"}""").release)
+        assertEquals("1.4.2", LoggingConfig.fromJson("""{"release":"1.4.2"}""").release)
+    }
+
+    @Test
     fun defaultsWhenFieldsMissing() {
         val cfg = LoggingConfig.fromJson("""{"service":"x"}""")
         assertEquals("x", cfg.service)

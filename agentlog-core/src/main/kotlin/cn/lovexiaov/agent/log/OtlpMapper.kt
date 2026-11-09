@@ -37,6 +37,7 @@ object OtlpMapper {
 
     // OTel 语义约定键（部分仍为 Experimental，统一收口在这里）。
     private const val SERVICE_NAME = "service.name"
+    private const val SERVICE_VERSION = "service.version"
     private const val DEPLOYMENT_ENV = "deployment.environment"
     private const val SESSION_ID = "session.id"
     private const val ENDUSER_ID = "enduser.id"
@@ -218,6 +219,8 @@ object OtlpMapper {
         val attrs = mutableListOf<JsonValue>()
         attrs.add(toKeyValue(SERVICE_NAME, str(event.service.ifEmpty { "app" })))
         event.env?.takeIf { it.isNotEmpty() }?.let { attrs.add(toKeyValue(DEPLOYMENT_ENV, str(it))) }
+        // Schema v1.3：release -> OTel service.version
+        event.release?.takeIf { it.isNotEmpty() }?.let { attrs.add(toKeyValue(SERVICE_VERSION, str(it))) }
         event.sessionId.takeIf { it.isNotEmpty() }?.let { attrs.add(toKeyValue(SESSION_ID, str(it))) }
         attrs.add(toKeyValue("telemetry.sdk.name", str("agent-log")))
         attrs.add(toKeyValue("telemetry.sdk.language", str("kotlin")))

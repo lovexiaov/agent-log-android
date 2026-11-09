@@ -12,7 +12,16 @@ import org.junit.jupiter.api.Test
  */
 class SchemaTests {
     private val requiredKeys = setOf("ts", "level", "service", "event_type", "session_id", "agent_auto", "message")
-    private val optionalKeys = setOf("trace_id", "span_id", "subsystem", "category", "env", "user_id", "payload")
+    private val optionalKeys = setOf(
+        "trace_id",
+        "span_id",
+        "subsystem",
+        "category",
+        "env",
+        "release",
+        "user_id",
+        "payload",
+    )
     private val legacyKeys = setOf("eventType", "sessionId", "traceId", "agentAuto", "timestamp")
 
     private fun parseLine(line: String): Map<String, Any?> = Json.parse(line) as Map<String, Any?>
@@ -29,6 +38,7 @@ class SchemaTests {
         agentAuto = true,
         message = "GET https://api.example.com/orders -> 200",
         env = "prod",
+        release = "1.4.2",
         userId = "u-1",
         payload = mapOf("status" to 200.toJsonValue(), "duration_ms" to 128.toJsonValue()),
     )
@@ -59,6 +69,18 @@ class SchemaTests {
         assertEquals(128L, payload["duration_ms"])
         assertNull(obj["status"], "业务字段不应提升到顶层")
         assertNull(obj["duration_ms"])
+    }
+
+    @Test
+    fun releaseIsSerializedWhenPresent() {
+        val obj = parseLine(fullEntry().toJsonLine())
+        assertEquals("1.4.2", obj["release"])
+    }
+
+    @Test
+    fun tooLongReleaseIsDropped() {
+        val obj = parseLine(fullEntry().copy(release = "x".repeat(200)).toJsonLine())
+        assertNull(obj["release"], "超长 release 不应写出")
     }
 
     @Test

@@ -56,6 +56,7 @@ class Logger(
     private val sink: LogSink,
     private val sessionId: String = Session.id,
     private val redactEnabled: Boolean = true,
+    private val release: String? = null,
     private val bound: Map<String, Any?> = emptyMap(),
 ) {
     var minLevel: Level = minLevel
@@ -65,7 +66,7 @@ class Logger(
     fun child(ctx: Map<String, Any?>): Logger = Logger(
         service = service, env = env, subsystem = subsystem, minLevel = minLevel,
         redactor = redactor, sink = sink, sessionId = sessionId,
-        redactEnabled = redactEnabled, bound = bound + ctx,
+        redactEnabled = redactEnabled, release = release, bound = bound + ctx,
     )
 
     /**
@@ -151,7 +152,7 @@ class Logger(
         // Go/Python/Java 端统一用后者）；两种都不能漏进 payload。
         val reserved = setOf(
             "userId", "user_id", "sessionId", "session_id", "traceId", "trace_id",
-            "spanId", "span_id", "event", "category", "subsystem", "env",
+            "spanId", "span_id", "event", "category", "subsystem", "env", "release",
         )
         val payloadMap = merged.filterKeys { it !in reserved }.mapValues { it.value.toJsonValue() }
 
@@ -168,6 +169,7 @@ class Logger(
             agentAuto = agentAuto,
             message = message,
             env = (merged["env"] as? String) ?: env,
+            release = release,
             userId = merged.firstStringOf("userId", "user_id"),
             payload = if (payloadMap.isEmpty()) null else payloadMap,
         )

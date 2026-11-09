@@ -27,6 +27,7 @@ object AgentLog {
             redactor = Redactor(additional = config.redactPaths.toSet()),
             sink = FileSink(file),
             redactEnabled = config.redactEnabled,
+            release = config.release,
         )
     }
 

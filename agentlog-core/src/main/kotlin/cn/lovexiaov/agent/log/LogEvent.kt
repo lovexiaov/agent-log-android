@@ -20,6 +20,7 @@ data class LogEvent(
     val agentAuto: Boolean,
     val message: String,
     val env: String? = null,
+    val release: String? = null,
     val userId: String? = null,
     val payload: Map<String, JsonValue>? = null,
 ) {
@@ -37,6 +38,9 @@ data class LogEvent(
         subsystem?.let { sb.append(",\"subsystem\":").append(Json.quote(it)) }
         category?.let { sb.append(",\"category\":").append(Json.quote(it)) }
         env?.let { sb.append(",\"env\":").append(Json.quote(it)) }
+        // Schema v1.3：可选 release；超长值直接丢弃，避免写出违规行
+        release?.takeIf { it.isNotEmpty() && it.length <= 128 }
+            ?.let { sb.append(",\"release\":").append(Json.quote(it)) }
         userId?.let { sb.append(",\"user_id\":").append(Json.quote(it)) }
         // Schema v1.2：非法 trace_id 直接丢弃（事件照写），大写归一为小写
         TraceId.normalize(traceId)?.let { sb.append(",\"trace_id\":").append(Json.quote(it)) }

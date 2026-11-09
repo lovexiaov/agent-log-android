@@ -47,13 +47,16 @@ object AgentLogAndroid {
     private fun installCrashHandler() {
         val previous = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            val exceptionMessage = throwable.message ?: throwable.javaClass.simpleName
             AgentLog.recordAuto(
                 EventType.CRASH,
-                "uncaught: ${throwable.message ?: throwable.javaClass.simpleName}",
+                "uncaught: $exceptionMessage",
                 payload = mapOf(
                     "thread" to thread.name,
                     "exception" to throwable.javaClass.name,
+                    "exception_message" to exceptionMessage,
                     "stack" to throwable.stackTraceToString().take(4000),
+                    "mechanism" to "uncaught",
                 ),
             )
             previous?.uncaughtException(thread, throwable)

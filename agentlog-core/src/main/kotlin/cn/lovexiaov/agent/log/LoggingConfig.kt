@@ -9,6 +9,7 @@ import java.io.File
 data class LoggingConfig(
     val service: String,
     val env: String? = null,
+    val release: String? = null,
     val subsystem: String? = null,
     val minLevel: Level = Level.DEBUG,
     val redactEnabled: Boolean = true,
@@ -27,10 +28,17 @@ data class LoggingConfig(
             val root = Json.parse(json) as? Map<*, *> ?: emptyMap<String, Any?>()
             val service = root["service"] as? String ?: "app"
             val env = root["env"] as? String
+            val release = root["release"] as? String
             val levelName = root["level"] as? String
             val minLevel = Level.fromName(levelName ?: "info") ?: Level.INFO
             val redactPaths = (root["redactPaths"] as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
-            return LoggingConfig(service = service, env = env, minLevel = minLevel, redactPaths = redactPaths)
+            return LoggingConfig(
+                service = service,
+                env = env,
+                release = release,
+                minLevel = minLevel,
+                redactPaths = redactPaths,
+            )
         }
     }
 }

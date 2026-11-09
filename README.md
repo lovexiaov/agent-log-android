@@ -123,8 +123,8 @@ AgentLogAndroid.bootstrap(context = this, config = config)
 ```json
 {"ts":"2026-11-02T13:37:21.123Z","level":"info","service":"com.yourapp",
  "subsystem":"com.yourapp.agent","category":"settings","event_type":"screen_view",
- "session_id":"...","trace_id":"trace_abc","agent_auto":true,
- "message":"screen_view MainActivity","env":"dev",
+ "session_id":"...","trace_id":"3f9a1c2b7d4e4a5b8c9d0e1f2a3b4c5d","agent_auto":true,
+ "message":"screen_view MainActivity","env":"dev","release":"1.4.2",
  "payload":{"activity":"MainActivity","package":"com.yourapp"}}
 ```
 
@@ -141,6 +141,7 @@ AgentLogAndroid.bootstrap(context = this, config = config)
 | `agent_auto` | true=自动埋点 | 必填 |
 | `message` | 人可读摘要（已脱敏） | 必填 |
 | `env` | dev/staging/prod | 可选 |
+| `release` | 发布标识（v1.3）：semver / git sha / build number，≤128 字符，由 `LoggingConfig.release` 盖章到每条事件；OTLP 侧映射为 `service.version` | 可选 |
 | `payload` | 事件专属上下文（已脱敏） | 可选 |
 
 ## 脱敏（C6 强制）
