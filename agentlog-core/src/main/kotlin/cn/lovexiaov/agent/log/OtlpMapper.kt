@@ -64,8 +64,8 @@ object OtlpMapper {
     private val STATUS_KEYS = listOf("status_code", "status", "statusCode", "http.status_code")
     private val DURATION_KEYS = listOf("duration_ms", "durationMs", "duration")
 
-    /** 规范键是 `statement`；`sql` / `query` 仅读取侧兼容旧数据（Schema v1.1）。 */
-    private val SQL_KEYS = listOf("statement", "sql", "query")
+    /** 规范键是 `statement`；无历史别名。 */
+    private val SQL_KEYS = listOf("statement")
     private val DB_SYSTEM_KEYS = listOf("db_system", "db.system", "system")
     private val DB_OPERATION_KEYS = listOf("operation", "op")
 
@@ -198,7 +198,7 @@ object OtlpMapper {
     /**
      * agent-log level → `severityText` / `severityNumber`。
      *
-     * 读取侧别名 `warning` 归一化为 `warn`；未知 level **降级为 INFO**，
+     * 未知 level（含非规范的 `warning`）**降级为 INFO**，
      * 不让一次导出因为脏数据整体失败。
      */
     fun levelToSeverity(level: String?): Severity = when (Level.fromWire(level ?: "info") ?: Level.INFO) {

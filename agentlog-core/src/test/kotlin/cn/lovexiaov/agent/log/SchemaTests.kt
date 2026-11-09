@@ -66,7 +66,7 @@ class SchemaTests {
         val expected = setOf("trace", "debug", "info", "warn", "error", "critical")
         for (lvl in Level.entries) assertTrue(expected.contains(lvl.agentName), "非法 level: ${lvl.agentName}")
         assertEquals("warn", Level.WARN.agentName)
-        assertEquals(Level.WARN, Level.fromWire("warning"))
+        assertNull(Level.fromWire("warning"))
         assertEquals(Level.WARN, Level.fromWire("warn"))
         assertNull(Level.fromWire("fatal"))
     }

@@ -94,8 +94,8 @@ class OtlpMapperTests {
     }
 
     @Test
-    fun warningAliasAndUnknownLevelDegradeToInfo() {
-        assertEquals(OtlpMapper.Severity("WARN", 13), OtlpMapper.levelToSeverity("warning"))
+    fun warningIsNotCanonicalAndUnknownLevelDegradeToInfo() {
+        assertEquals(OtlpMapper.Severity("INFO", 9), OtlpMapper.levelToSeverity("warning"))
         assertEquals(OtlpMapper.Severity("INFO", 9), OtlpMapper.levelToSeverity("nonsense"))
         assertEquals(OtlpMapper.Severity("INFO", 9), OtlpMapper.levelToSeverity(null))
     }
@@ -312,14 +312,14 @@ class OtlpMapperTests {
     }
 
     @Test
-    fun dbSpanAcceptsLegacySqlAndQueryKeysOnRead() {
+    fun dbSpanIgnoresLegacySqlAndQueryKeys() {
         val legacySql = OtlpMapper.eventToSpan(
             event(
                 type = "db_query",
                 payload = mapOf("operation" to JsonValue.Str("exec"), "sql" to JsonValue.Str("INSERT 1")),
             ),
         )
-        assertEquals("exec INSERT 1", text(fields(legacySql!!)["name"]))
+        assertEquals("exec ", text(fields(legacySql!!)["name"]))
 
         val legacyQuery = OtlpMapper.eventToSpan(
             event(
