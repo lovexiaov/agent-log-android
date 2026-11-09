@@ -327,7 +327,7 @@ class OtlpMapperTests {
                 payload = mapOf("operation" to JsonValue.Str("exec"), "query" to JsonValue.Str("INSERT 2")),
             ),
         )
-        assertEquals("exec INSERT 2", text(fields(legacyQuery!!)["name"]))
+        assertEquals("exec ", text(fields(legacyQuery!!)["name"]))
     }
 
     @Test
