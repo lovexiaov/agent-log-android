@@ -24,7 +24,7 @@ import java.time.ZoneOffset
  */
 object OtlpMapper {
     /** 与项目版本保持一致（测试断言）。 */
-    const val SDK_VERSION: String = "1.0.0"
+    const val SDK_VERSION: String = "1.3.0"
 
     /** OTel `SpanKind.SPAN_KIND_CLIENT`。 */
     const val SPAN_KIND_CLIENT: Int = 3
