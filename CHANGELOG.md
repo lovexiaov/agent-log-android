@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-11-11
+
+Schema v1.4（向后兼容增量）：六端统一的 AI 交互事件。不改变任何既有字段语义与必填约束。
+
+### Added
+
+- `agentlog-core` 新增 `AiEvents` object（`aiRequest` / `aiResponse` / `aiToolCall` /
+  `aiToolResult` / `aiGuardrail` / `aiError`），并在 `AgentLog` 门面暴露同名委托；
+  `EventType` 增补 6 个 AI 值。
+- `Logger.record(...)` 公开入口（`event_type` 为开放 string）支持显式
+  level / event_type / agentAuto；`AgentLog.bootstrap(config, sink)` 便于测试注入 sink。
+- 6 个标准 `event_type`：`ai_request_initiated` / `ai_response_received` /
+  `ai_tool_call_initiated` / `ai_tool_call_completed` / `ai_guardrail_triggered` / `ai_error`；
+  可用可选 `request_id` 串联同一轮对话（框架不强制生成）。
+
+### Changed
+
+- OTLP：AI 事件只产 LogRecord，**不产 Span**；可挂 `span_id` 供下游组 span。
+  `ai_error` 复用 v1.3 异常词表，映射为 `exception.*` 属性。
+
 ## [1.3.0] - 2026-11-10
 
 Schema v1.3（向后兼容增量）。

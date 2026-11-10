@@ -148,6 +148,23 @@ AgentLogAndroid.bootstrap(context = this, config = config)
 
 在 logger 层（而非调用方）强制脱敏。默认脱敏键（各端可加不可减）：`password`、`token`、`authorization`、`cookie`、`secret`，并覆盖 `api_key`、`access_token`、`auth_token` 等带分隔符变体。此外对**字符串值**再做正则兜底（匹配 `key=value` 形式）。网络事件默认只记 `host/path/status/耗时/error`，不记 query 敏感参数与 body。
 
+## AI 交互事件（Schema v1.4）
+
+六端共用同一份 AI 事件契约（`INTERFACE.md` §4.4）：6 个标准 `event_type`、snake_case
+payload 词表、`agent_auto=false`（业务显式埋点，框架不 hook 任何 LLM SDK）。
+
+```kotlin
+AgentLog.aiRequest("gpt-4o", "summarize this", mapOf("request_id" to "req_001", "provider" to "openai"))
+AgentLog.aiResponse("gpt-4o", 530, mapOf("request_id" to "req_001", "prompt_tokens" to 320))
+AgentLog.aiError("RateLimitError", "429 too many requests", mapOf("request_id" to "req_001"))
+```
+
+`AiEvents` object 也直接暴露同名方法；`extra` 用于追加标准词表或业务键。
+level：request / response / tool = info，guardrail = warn，error = error。
+`request_id` 用于串联「请求→响应→工具→错误」同一轮对话，框架不强制生成、不校验。
+`ai_error` 复用 v1.3 异常词表。OTLP 导出只产 LogRecord，**不产 Span**；若下游需要
+组 span，请显式传 `span_id`。
+
 ## 构建与验证
 
 仓库是**单一 Gradle 根工程**（`settings.gradle.kts` 含 `:agentlog-core` + `:agentlog-android` + `:example`），根 wrapper 一处构建：

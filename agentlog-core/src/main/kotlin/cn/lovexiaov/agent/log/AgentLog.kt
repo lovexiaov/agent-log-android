@@ -16,19 +16,35 @@ object AgentLog {
     private lateinit var sinkFile: File
 
     fun bootstrap(config: LoggingConfig) {
-        val dir = config.exportDirectory ?: File(System.getProperty("java.io.tmpdir"), "agent-log")
-        val file = File(dir, "agent-log.jsonl")
-        sinkFile = file
+        bootstrap(config, FileSink(logFile(config)))
+    }
+
+    /** 指定 sink 初始化（测试用，对齐 Java `AgentLog.bootstrap(config, sink)`）。 */
+    fun bootstrap(config: LoggingConfig, sink: LogSink) {
+        sinkFile = logFile(config)
         shared = Logger(
             service = config.service,
             env = config.env,
             subsystem = config.subsystem,
             minLevel = config.minLevel,
             redactor = Redactor(additional = config.redactPaths.toSet()),
-            sink = FileSink(file),
+            sink = sink,
             redactEnabled = config.redactEnabled,
             release = config.release,
         )
+    }
+
+    private fun logFile(config: LoggingConfig): File {
+        val dir = config.exportDirectory ?: File(System.getProperty("java.io.tmpdir"), "agent-log")
+        return File(dir, "agent-log.jsonl")
+    }
+
+    /** 共享 [Logger]；未 bootstrap 时给出明确错误（对齐 Java）。 */
+    fun logger(): Logger {
+        if (!::shared.isInitialized) {
+            error("AgentLog not bootstrapped. Call AgentLog.bootstrap(config) first.")
+        }
+        return shared
     }
 
     fun info(message: String, category: String = "app", traceId: String? = null, payload: Map<String, Any?>? = null) =
@@ -64,6 +80,25 @@ object AgentLog {
         traceId: String? = null,
         payload: Map<String, Any?>? = null,
     ) = shared.recordAuto(eventType, message, category, traceId, payload)
+
+    // ---- AI 交互事件（Schema v1.4，业务显式埋点；详见 AiEvents） ----
+    fun aiRequest(model: String, promptText: String, extra: Map<String, Any?>? = null) =
+        AiEvents.aiRequest(model, promptText, extra)
+
+    fun aiResponse(model: String, totalTokens: Int, extra: Map<String, Any?>? = null) =
+        AiEvents.aiResponse(model, totalTokens, extra)
+
+    fun aiToolCall(toolName: String, toolArguments: Any?, extra: Map<String, Any?>? = null) =
+        AiEvents.aiToolCall(toolName, toolArguments, extra)
+
+    fun aiToolResult(toolName: String, ok: Boolean, extra: Map<String, Any?>? = null) =
+        AiEvents.aiToolResult(toolName, ok, extra)
+
+    fun aiGuardrail(guardrailType: String, reason: String, extra: Map<String, Any?>? = null) =
+        AiEvents.aiGuardrail(guardrailType, reason, extra)
+
+    fun aiError(errorType: String, message: String, extra: Map<String, Any?>? = null) =
+        AiEvents.aiError(errorType, message, extra)
 
     /** 导出当前 JSONL 副本/路径，供 Agent 抓取或人工分析。 */
     fun export(): File = sinkFile

@@ -104,26 +104,26 @@ class Logger(
 
     // ---- 业务手动日志（agentAuto = false） ----
     fun trace(message: String, category: String = "app", traceId: String? = null, payload: Map<String, Any?>? = null) =
-        log(Level.TRACE, message, category, traceId, EventType.LOG, payload, agentAuto = false)
+        log(Level.TRACE, message, category, traceId, EventType.LOG.raw, payload, agentAuto = false)
 
     fun debug(message: String, category: String = "app", traceId: String? = null, payload: Map<String, Any?>? = null) =
-        log(Level.DEBUG, message, category, traceId, EventType.LOG, payload, agentAuto = false)
+        log(Level.DEBUG, message, category, traceId, EventType.LOG.raw, payload, agentAuto = false)
 
     fun info(message: String, category: String = "app", traceId: String? = null, payload: Map<String, Any?>? = null) =
-        log(Level.INFO, message, category, traceId, EventType.LOG, payload, agentAuto = false)
+        log(Level.INFO, message, category, traceId, EventType.LOG.raw, payload, agentAuto = false)
 
     fun warn(message: String, category: String = "app", traceId: String? = null, payload: Map<String, Any?>? = null) =
-        log(Level.WARN, message, category, traceId, EventType.LOG, payload, agentAuto = false)
+        log(Level.WARN, message, category, traceId, EventType.LOG.raw, payload, agentAuto = false)
 
     fun error(message: String, category: String = "app", traceId: String? = null, payload: Map<String, Any?>? = null) =
-        log(Level.ERROR, message, category, traceId, EventType.LOG, payload, agentAuto = false)
+        log(Level.ERROR, message, category, traceId, EventType.LOG.raw, payload, agentAuto = false)
 
     fun critical(
         message: String,
         category: String = "app",
         traceId: String? = null,
         payload: Map<String, Any?>? = null,
-    ) = log(Level.CRITICAL, message, category, traceId, EventType.LOG, payload, agentAuto = false)
+    ) = log(Level.CRITICAL, message, category, traceId, EventType.LOG.raw, payload, agentAuto = false)
 
     // ---- 自动埋点内部回调（agentAuto = true，框架核心价值，始终记录） ----
     fun recordAuto(
@@ -132,14 +132,30 @@ class Logger(
         category: String = "auto",
         traceId: String? = null,
         payload: Map<String, Any?>? = null,
-    ) = log(Level.INFO, message, category, traceId, eventType, payload, agentAuto = true)
+    ) = log(Level.INFO, message, category, traceId, eventType.raw, payload, agentAuto = true)
+
+    /**
+     * 写出一条完整指定 level / event_type / agent_auto 的事件（Schema v1.4）。
+     *
+     * [AiEvents] 的 AI 便捷方法经此入口盖章：`agent_auto=false`（业务显式埋点），
+     * `eventType` 直接是线格式取值（开放 string，不写死枚举），level 按事件语义指定。
+     */
+    fun record(
+        level: Level,
+        eventType: String,
+        message: String,
+        category: String? = "ai",
+        traceId: String? = null,
+        payload: Map<String, Any?>? = null,
+        agentAuto: Boolean = false,
+    ) = log(level, message, category, traceId, eventType, payload, agentAuto)
 
     private fun log(
         level: Level,
         message: String,
         category: String?,
         traceId: String?,
-        eventType: EventType,
+        eventType: String,
         payload: Map<String, Any?>?,
         agentAuto: Boolean,
     ) {
@@ -162,7 +178,7 @@ class Logger(
             service = service,
             subsystem = (merged["subsystem"] as? String) ?: subsystem,
             category = (merged["category"] as? String),
-            eventType = (merged["event"] as? String) ?: eventType.raw,
+            eventType = (merged["event"] as? String) ?: eventType,
             sessionId = merged.firstStringOf("sessionId", "session_id") ?: sessionId,
             traceId = merged.firstStringOf("traceId", "trace_id"),
             spanId = merged.firstStringOf("spanId", "span_id"),

@@ -24,7 +24,7 @@ import java.time.ZoneOffset
  */
 object OtlpMapper {
     /** 与项目版本保持一致（测试断言）。 */
-    const val SDK_VERSION: String = "1.3.0"
+    const val SDK_VERSION: String = "1.4.0"
 
     /** OTel `SpanKind.SPAN_KIND_CLIENT`。 */
     const val SPAN_KIND_CLIENT: Int = 3
@@ -276,7 +276,8 @@ object OtlpMapper {
         event.userId?.takeIf { it.isNotEmpty() }?.let { attrs.add(toKeyValue(ENDUSER_ID, str(it))) }
         val payload = event.payload ?: emptyMap()
         attrs.addAll(keyValues(payload, "payload."))
-        if (event.eventType == "crash" || event.eventType == "hang") {
+        // Schema v1.4：ai_error 复用 v1.3 异常词表，与 crash/hang 同样映射为 exception.*
+        if (event.eventType == "crash" || event.eventType == "hang" || event.eventType == "ai_error") {
             attrs.addAll(exceptionAttributes(payload))
         }
         return attrs

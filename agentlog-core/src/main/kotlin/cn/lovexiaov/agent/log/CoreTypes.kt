@@ -52,6 +52,9 @@ object SpanId {
  * `db_query` 与 Java/Go/Python 端同名（Schema v1.1 起 payload 词表统一，
  * SQL 文本一律写 `statement`，见 README §3.5）；库本身不做 SQL 埋点，
  * 这里保留该类型是为了让业务侧/上层埋点能产出符合词表的事件。
+ *
+ * Schema v1.4 起另含 6 个 AI 交互事件类型（[AI_REQUEST_INITIATED] 等）——它们不是
+ * 自动埋点，而是由业务代码通过 [AiEvents] 显式记录（`agent_auto=false`）。
  */
 enum class EventType(val raw: String) {
     SCREEN_VIEW("screen_view"),
@@ -60,6 +63,15 @@ enum class EventType(val raw: String) {
     CRASH("crash"),
     HANG("hang"),
     DB_QUERY("db_query"),
+
+    // Schema v1.4：AI 交互事件的 6 个标准 event_type（业务显式埋点，agent_auto=false）。
+    // 与 Java `CoreTypes.EventType` / Python `EventType` / Go `EventTypeAI*` 逐字对齐。
+    AI_REQUEST_INITIATED("ai_request_initiated"),
+    AI_RESPONSE_RECEIVED("ai_response_received"),
+    AI_TOOL_CALL_INITIATED("ai_tool_call_initiated"),
+    AI_TOOL_CALL_COMPLETED("ai_tool_call_completed"),
+    AI_GUARDRAIL_TRIGGERED("ai_guardrail_triggered"),
+    AI_ERROR("ai_error"),
     LOG("log"),
 }
 
